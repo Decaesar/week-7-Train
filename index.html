@@ -1,0 +1,190 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Train</title>
+
+<!-- Reference to bootstrap -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+<!-- Reference to Style.css -->
+<link rel="stylesheet" type="text/css" href="assets/style/reset.css">
+<link rel="stylesheet" type="text/css" href="assets/style/style.css">
+
+<!-- reference to javascript -->
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+
+<!-- reference to firebase -->
+<script src="https://www.gstatic.com/firebasejs/4.11.0/firebase.js"></script>
+
+  <!-- Link to Moment.js should go here -->
+
+  <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+
+
+
+</head>
+<body>
+
+<div class="container">
+    <div class="jumbotron">
+        <h1 class="display-4"> Welcome to Central Train Station </h1>
+        <p class="lead"> Live Train Updates around the Clock </p>         
+    </div>
+
+<div class="row">
+<div class="col-md-12"> 
+
+<div class="highSection">
+
+  <h3> <strong> Current Train </strong></h3>
+   
+    <table class="table" id='train-table'>
+        <thead>
+          <tr>
+            <th scope="col"> Train Name </th>
+            <th scope="col"> Destination </th>
+            <th scope="col"> Frequency (min) </th>
+            <th scope="col"> Next Arrival </th>
+            <th scope="col"> Minutes Away </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row" id="train"></th>
+            <td id="destination"></td>
+            <td id="freq"></td>        
+            <td id="nextTrain"></td>
+            <td id="minutesAway"></td>
+          </tr>
+        </tbody>
+      </table>
+</div>
+
+<div class="lowerSection"> 
+
+    <div class="addTrain">Add Train</div>
+    <form>
+            <div class="form-group">
+              <label for="exampleInputEmail1">Train Name</label>
+              <input type="text" class="form-control" id="name" aria-describedby="emailHelp" placeholder="">
+            </div>
+            <div class="form-group">
+                <label for="employee-name-input">Destination</label>
+                <input type="text" class="form-control" id="traindestination" placeholder="">
+            </div>
+
+            <div class="form-group">
+                    <label for="exampleInputPassword1">First Train Time (HH:mm)</label>
+                    <input type="text" class="form-control" id="firsttrain" placeholder="">
+            </div>
+
+            <div class="form-group">
+                <label for="exampleInputPassword1">Frequency (min) </label>
+                <input type="text" class="form-control" id="freq" placeholder="">
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="button">Submit</button>
+     </form>
+
+     </div>
+
+    </div>
+</div>
+</div>
+
+
+<script>
+
+// intiate firebase //
+
+    var config = {
+      apiKey: "AIzaSyDcha1luXoNM8Z3GbI8ULh9nSxd4mCsZOQ",
+      authDomain: "my-new-project-b9596.firebaseapp.com",
+      databaseURL: "https://my-new-project-b9596.firebaseio.com",
+      projectId: "my-new-project-b9596",
+      storageBucket: "my-new-project-b9596.appspot.com",
+      messagingSenderId: "229223978785"
+    };
+
+    firebase.initializeApp(config);
+
+    var database = firebase.database();
+
+    // Capture Button Click
+    $("#button").on("click", function(event) {
+    event.preventDefault();
+
+    var trainName = $("#name").val().trim();
+    var trainDest = $("#traindestination").val().trim();
+    var firstTrainTime = moment($("#firsttrain").val().trim(), "DD/MM/YY").format("X");
+    var freq = $("#freq").val().trim();
+
+
+    console.log(trainName);
+
+    console.log("Train destination is" + trainDest);
+
+  // Creates local "temporary" object for holding employee data
+  var newTrain = {
+    name: trainName,
+    destination: trainDest,
+    firsttrain: firstTrainTime,
+    trainfreq: freq
+  };
+
+  // Uploads employee data to the database
+  database.ref().push(newTrain);
+
+  // Logs everything to console
+  console.log(newTrain.name);
+  console.log(newTrain.destination);
+  console.log(newTrain.firsttrain);
+  console.log(newTrain.trainfreq);
+  });
+
+    // Firebase watcher + initial loader + order/limit HINT: .on("child_added"
+     
+    database.ref().on("child_added", function(childSnapshot, prevChildKey) {
+
+    console.log(childSnapshot.val());
+
+        // Store everything into a variable.
+        var trainName = childSnapshot.val().name;
+        var trainDest = childSnapshot.val().destination;
+        var firstTrainTime = childSnapshot.val().firsttrain;
+        var freq = childSnapshot.val().trainfreq;
+
+        // Train Info
+        console.log(trainName);
+        console.log("train dest is " + trainDest);
+        console.log(firstTrainTime);
+        console.log(freq);
+
+  // Prettify the employee start
+  var firstTrainTimepretty = moment.unix(firstTrainTime).format("MM/DD/YY");
+
+  // Calculate the months worked using hardcore math
+  // To calculate the months worked
+  var nextArrival = moment().diff(moment.unix(firstTrainTime, "X"), "months");
+  console.log(nextArrival);
+
+  // Calculate the total billed rate
+  var minAway = nextArrival * freq;
+  console.log(minAway);
+
+    $("#train-table").append("<tr><td>" + trainName + "</td><td>" + trainDest + "</td><td>" +
+      freq + "</td><td>" + nextArrival + "</td><td>" + minAway + "</td><tr>");
+   
+    });
+
+</script>  
+
+
+</body>
+</html>
+
